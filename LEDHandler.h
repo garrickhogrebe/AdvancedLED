@@ -2,10 +2,13 @@
 #define AL_LEDHandler_H
 #include "AdvancedLED4.h"
 #include "Animations.h"
+#include "Loader.h"
 //
 //LED handler class. Highest level of abstraction
 class LEDHandler {
 public:
+	//Array of LEDS
+	CRGB leds[NUM_LEDS];
 	//Array containing all currently loaded animations
 	class animation* animation_array[NUMBER_OF_ANIMATIONS];
 	//Array showing where to find each animations variables for the correspodning index
@@ -59,7 +62,7 @@ public:
 	void markForDeletion(int index);
 
 	//ToDo Adds an animation to the handlers animation array. Need to update parameters
-	void addAnimation(animation* new_animation);
+	void addAnimation(animation* new_animation, Loader* loader);
 
 	//ToDo defragments the variable array, returns the first available memory location
 	int cleanVariableArray();
