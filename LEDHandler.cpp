@@ -1,6 +1,7 @@
 #include "LEDHandler.h"
 
 void LEDHandler::initializeHandler() {
+	Serial.println("yeet");
 	//initialize proper values for the handler's memory
 	for (int x = 0; x < NUMBER_OF_ANIMATIONS; x++) {
 		animation_array[x] = NULL;
@@ -16,20 +17,29 @@ void LEDHandler::initializeHandler() {
 		variable_in_use[x] = false;
 	}
 	for (int x = 0; x < MAX_LAYERS; x++) {
-		loaded_layers[x] = NULL;
+		//loaded_layers[x] = NULL;
 	}
+	handler_animation_list = &main_animation_list;
+	handler_loader = &main_loader;
 	current_time = millis();
 
 	FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
 	FastLED.setBrightness(BRIGHTNESS);
+	
 
 }
 
 void LEDHandler::run() {
+	//Serial.println("boot");
 	audioUpdates();
+	//Serial.println("boot1");
 	current_time = millis();
+	//Serial.println("boot2");
 	playAnimations();
-	deleteAnimations();
+	//Serial.println("boot3");
+	deleteMarkedAnimations();
+	//Serial.println("boot4");
+	//FastLED.show();
 
 }
 
@@ -44,43 +54,55 @@ void LEDHandler::audioUpdates() {
 void LEDHandler::playAnimations() {
 	for (animation_index_number = 0; animation_index_number < NUMBER_OF_ANIMATIONS; animation_index_number++) {
 		if (animation_array[animation_index_number] != NULL) {
-			//ToDo run the play function for this animation
+			//run the play function for this animation
+			animation_array[animation_index_number]->play(variable_start_locations[animation_index_number], this);
 		}
 	}
 }
 
-void LEDHandler::deleteAnimations() {
+void LEDHandler::deleteMarkedAnimations() {
 	bool deleted = false;
 	//Check each animation to see if it needs to be deleted. It can either be marked, or a dependency has been deleted
 	for (int x = 0; x < NUMBER_OF_ANIMATIONS; x++) {
 		if (animations_to_delete[x] == true) {
-			//ToDo delete this animation
+			deleteAnimation(x);
 			animations_to_delete[x] = false;
 			deleted = true;
 		}
-		else if (animation_array[dependencies[x]] == NULL) {
-			//ToDo delete this animation
+		else if (animation_array[dependencies[x]] == NULL && dependencies[x] != -1) {
+			deleteAnimation(x);
 			deleted = true;
 		}
 	}
 	//A dependency may of been deleted so run through again until no dependencies are deleted
 	if (deleted) {
-		deleteAnimations();
+		Serial.println("MORE");
+		deleteMarkedAnimations();
 	}
 	return;
+}
+
+void LEDHandler::deleteAnimation(int index){
+	int num_variables = number_of_variables[index];
+	int start_location = variable_start_locations[index];
+	//mark variables as not in use
+	for (int x = 0; x < num_variables; x++) {
+		variable_in_use[start_location + x] = false;
+	}
+	//remove animation from the array
+	animation_array[index] = NULL;
 }
 
 void LEDHandler::markForDeletion(int index) {
 	animations_to_delete[index] = true;
 }
 
-void LEDHandler::addAnimation(animation* new_animation, Loader* loader) {
+void LEDHandler::addAnimation(animation* new_animation, int layer_index, Loader* loader) {
 	int x;
 	int animation_index;
 	int empty_in_row = 0;
 	int full = 1;
 	int start = 0;
-
 	//Find the first available spot in the animation array
 	for (x = 0; x < NUMBER_OF_ANIMATIONS; x++) {
 		if (animation_array[x] == NULL) {
@@ -95,9 +117,8 @@ void LEDHandler::addAnimation(animation* new_animation, Loader* loader) {
 		return;
 	}
 
-	//TODO determine number of variables needed
+	//determine number of variables needed
 	int num_variables = new_animation->determineNumVariables(loader);
-
 	//Attempt to find a gap large enough to store all variables. If no gap is found defragment the variable memory, and check to see if it fits now
 	for (x = 0; x < NUMBER_OF_VARIABLES; x++) {
 		if (variable_in_use[x] == true) {
@@ -126,10 +147,15 @@ void LEDHandler::addAnimation(animation* new_animation, Loader* loader) {
 	animation_array[animation_index] = new_animation;
 	variable_start_locations[animation_index] = start;
 	start_time[animation_index] = millis();
-	//TODO assign the proper layer
-	//layer_array[animation_index] = ;
+	number_of_variables[animation_index] = num_variables;
+	//ToDo assign the proper layer
+	//layer_array[animation_index] = &loaded_layers[layer_index];
 
-	//TODO load variables either standard or non standard way
+	//load variables 
+	for (int i = 0; i < num_variables; i++) {
+		variable_in_use[start + i] = true;
+		animation_variables[start + i] = loader->variables[i];
+	}
 
 
 	
@@ -178,4 +204,26 @@ int LEDHandler::cleanVariableArray() {
 		variable_in_use[x] = false;
 	}
 	return start;
+}
+
+void LEDHandler::printInfo() {
+	for (int x = 0; x < NUMBER_OF_ANIMATIONS; x++) {
+		if (animation_array[x] != NULL) {
+			Serial.print(x);
+			Serial.print(": ");
+			Serial.print(animation_array[x]->name);
+			Serial.print(", Dependency: ");
+			Serial.print(dependencies[x]);
+			Serial.print(", Number Variables: ");
+			Serial.println(number_of_variables[x]);
+		}
+
+	}
+	for (int x = 0; x < NUMBER_OF_VARIABLES; x++) {
+		if (variable_in_use[x] == true) {
+			Serial.print(x);
+			Serial.print(": ");
+			Serial.println(animation_variables[x]);
+		}
+	}
 }

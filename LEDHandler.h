@@ -23,14 +23,16 @@ public:
 	bool variable_in_use[NUMBER_OF_VARIABLES];
 	//Array specifying which layer each animation writes too
 	class layer* layer_array[NUMBER_OF_ANIMATIONS];
-	//Array containing all currently loaded layers
-	class layer* loaded_layers[MAX_LAYERS];
+	//ToDo Array containing all currently loaded layers
+	//class layer loaded_layers[MAX_LAYERS];
 	//Array Containing dependancies for deleting animations. A value of -1 indicates this animation is a root and independent
 	int dependencies[NUMBER_OF_ANIMATIONS];
 	//Array to tell that an animation has been marked for deletion
 	bool animations_to_delete[NUMBER_OF_ANIMATIONS];
+	class Loader* handler_loader;
 	//ToDo List of possible layer techniques to choose from
-	//ToDo List of Possible Animations to choose from
+	//List of Possible Animations to choose from
+	class animation_list* handler_animation_list;
 	//ToDo triggers to choose from
 	//ToDo color palletes to choose from
 
@@ -40,10 +42,10 @@ public:
 	//Variable specifying the index of whatever animation is currently being played
 	int animation_index_number;
 
-	//ToDo initializes the LEDHandler
+	//initializes the LEDHandler
 	void initializeHandler();
 
-	//ToDo runs a full cycle of what needs to be done by the handler each frame 
+	//runs a full cycle of what needs to be done by the handler each frame 
 	void run();
 
 	//ToDo checks for bluetooth message and does proper updates
@@ -52,20 +54,26 @@ public:
 	//ToDo updates audio information, calculates meta data and updates triggers
 	void audioUpdates();
 
-	//ToDo Plays each animation
+	//Plays each animation
 	void playAnimations();
 
-	//ToDo Deletes animations
-	void deleteAnimations();
+	//Deletes animations marked for deletion
+	void deleteMarkedAnimations();
 
-	//ToDo marks an animation for deletion
+	//marks an animation for deletion
 	void markForDeletion(int index);
 
-	//ToDo Adds an animation to the handlers animation array. Need to update parameters
-	void addAnimation(animation* new_animation, Loader* loader);
+	//deletes a single animation at the given index
+	void deleteAnimation(int index);
 
-	//ToDo defragments the variable array, returns the first available memory location
+	//ToDo (just layer part) Adds an animation to the handlers animation array. Need to update parameters
+	void addAnimation(animation* new_animation, int layer_index, Loader* loader);
+
+	//defragments the variable array, returns the first available memory location
 	int cleanVariableArray();
+
+	//Prints currently loaded animations and their layer. Prints variables
+	void printInfo();
 
 	//ToDo Send message containing all animations to choose from
 	//ToDo send message containing all layers to choose from

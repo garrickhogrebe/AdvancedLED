@@ -1,7 +1,10 @@
 #ifndef AL_Animations_H
-#define AL_Animation_H
+#define AL_Animations_H
 #include "AdvancedLED4.h"
 #include "Loader.h"
+#include "LEDHandler.h"
+
+
 
 //Animation Class. Contains the function which writes to leds as well as information about the animation such as how to load it and how many inputs it expects
 class animation {
@@ -11,7 +14,7 @@ public:
 	//Does it follow standard loading, or is it custom
 	bool standard_load;
 	//the function it plays to update leds
-	void (*play)(int);
+	void (*play)(int start_location, class LEDHandler* handler);
 	//function for called to return how many variables this animation requires to be loaded into the handler
 	int determineNumVariables(Loader* loader);
 	//the function it uses to be loaded if it is non-standard. Returns the number of variables the function will use
@@ -26,7 +29,7 @@ public:
 
 
 	//ToDo constructor
-	animation();
+	animation(int number_of_inputs, String animation_name, bool load_type, void (*play_function)(int, LEDHandler*));
 
 };
 
@@ -35,14 +38,23 @@ public:
 class animation_list {
 public:
 	//First animation in the list
-	class animation* start;
+	class animation* start = NULL;
 	//How many animations in the list
 	int size = 0;
 	
-	//ToDo Appends a new animation to the list. Is called when an animation is constructed
+	//Appends a new animation to the list. Is called when an animation is constructed
 	void append(class animation* new_animation);
 
+	//Print out all of the animations
+	void printAnimations();
+
 };
+extern animation_list main_animation_list;
+
+//~~~~~~~~~~~~~~~~~~~~
+void test(int variable_start, LEDHandler* handler);
+
+
 
 
 
