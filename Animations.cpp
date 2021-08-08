@@ -54,7 +54,7 @@ void animation_list::printAnimations() {
 
 void test(int variable_start, LEDHandler* handler) {
 	int pos = beatsin16(10, 0, 160);
-	handler->leds[pos] = CHSV(10, 255, 255);
+	handler->leds[pos] = CHSV(50, 255, 255);
 }
 
 

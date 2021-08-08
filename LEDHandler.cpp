@@ -8,7 +8,7 @@ void LEDHandler::initializeHandler() {
 		variable_start_locations[x] = -1;
 		number_of_variables[x] = 0;
 		start_time[x] = 0;
-		layer_array[x] = NULL;
+		layer_index_array[x] = -1;
 		dependencies[x] = -1;
 		animations_to_delete[x] = false;
 	}
@@ -21,6 +21,7 @@ void LEDHandler::initializeHandler() {
 	}
 	handler_animation_list = &main_animation_list;
 	handler_loader = &main_loader;
+	handler_layer_effect_list = &main_layer_effect_list;
 	current_time = millis();
 
 	FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
@@ -149,7 +150,7 @@ void LEDHandler::addAnimation(animation* new_animation, int layer_index, Loader*
 	start_time[animation_index] = millis();
 	number_of_variables[animation_index] = num_variables;
 	//ToDo assign the proper layer
-	//layer_array[animation_index] = &loaded_layers[layer_index];
+	layer_index_array[animation_index] = layer_index;
 
 	//load variables 
 	for (int i = 0; i < num_variables; i++) {
@@ -207,6 +208,7 @@ int LEDHandler::cleanVariableArray() {
 }
 
 void LEDHandler::printInfo() {
+	Serial.println("Printing Animations: ");
 	for (int x = 0; x < NUMBER_OF_ANIMATIONS; x++) {
 		if (animation_array[x] != NULL) {
 			Serial.print(x);
@@ -215,10 +217,15 @@ void LEDHandler::printInfo() {
 			Serial.print(", Dependency: ");
 			Serial.print(dependencies[x]);
 			Serial.print(", Number Variables: ");
-			Serial.println(number_of_variables[x]);
+			Serial.print(number_of_variables[x]);
+			Serial.print(", Layer index: ");
+			Serial.print(layer_index_array[x]);
+			Serial.print(", Layer Effect: ");
+			Serial.println(loaded_layers[layer_index_array[x]].effect->name);
 		}
 
 	}
+	Serial.println("Printing Variables");
 	for (int x = 0; x < NUMBER_OF_VARIABLES; x++) {
 		if (variable_in_use[x] == true) {
 			Serial.print(x);
@@ -226,4 +233,6 @@ void LEDHandler::printInfo() {
 			Serial.println(animation_variables[x]);
 		}
 	}
+	Serial.println("Potential layer effects");
+	handler_layer_effect_list->printInfo();
 }

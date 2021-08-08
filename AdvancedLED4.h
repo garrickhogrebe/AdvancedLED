@@ -4,10 +4,10 @@
 #include<FastLED.h>
 
 
-#define NUMBER_OF_ANIMATIONS 10
+#define NUMBER_OF_ANIMATIONS 450
 #define NUMBER_OF_VARIABLES NUMBER_OF_ANIMATIONS*10
-#define MAX_LAYERS 20
-#define NUM_LEDS 167
+#define MAX_LAYERS 5
+#define NUM_LEDS 800
 #define DEBUG
 
 #define DATA_PIN    15
