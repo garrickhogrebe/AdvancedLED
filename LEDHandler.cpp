@@ -8,7 +8,8 @@ void LEDHandler::initializeHandler() {
 		variable_start_locations[x] = -1;
 		number_of_variables[x] = 0;
 		start_time[x] = 0;
-		layer_index_array[x] = -1;
+		//layer_index_array[x] = -1;
+		layer[x] = 0;
 		dependencies[x] = -1;
 		animations_to_delete[x] = false;
 	}
@@ -21,7 +22,7 @@ void LEDHandler::initializeHandler() {
 	}
 	handler_animation_list = &main_animation_list;
 	handler_loader = &main_loader;
-	handler_layer_effect_list = &main_layer_effect_list;
+	//handler_layer_effect_list = &main_layer_effect_list;
 	current_time = millis();
 
 	FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
@@ -53,12 +54,22 @@ void LEDHandler::audioUpdates() {
 }
 
 void LEDHandler::playAnimations() {
-	for (animation_index_number = 0; animation_index_number < NUMBER_OF_ANIMATIONS; animation_index_number++) {
+	for (int x = 0; x < NUMBER_OF_ANIMATIONS; x++) {
+		play_order[x] = x;
+	}
+	//Serial.println("preMerge");
+	mergeSort(play_order, 0, NUMBER_OF_ANIMATIONS - 1);
+	//Serial.println("postMerge");
+	for (int x = 0; x < NUMBER_OF_ANIMATIONS; x++) {
+		animation_index_number = play_order[x];
 		if (animation_array[animation_index_number] != NULL) {
 			//run the play function for this animation
 			animation_array[animation_index_number]->play(variable_start_locations[animation_index_number], this);
 		}
 	}
+		
+
+	
 }
 
 void LEDHandler::deleteMarkedAnimations() {
@@ -150,7 +161,8 @@ void LEDHandler::addAnimation(animation* new_animation, int layer_index, Loader*
 	start_time[animation_index] = millis();
 	number_of_variables[animation_index] = num_variables;
 	//ToDo assign the proper layer
-	layer_index_array[animation_index] = layer_index;
+	//layer_index_array[animation_index] = layer_index;
+	layer[animation_index] = layer_index;
 
 	//load variables 
 	for (int i = 0; i < num_variables; i++) {
@@ -219,9 +231,9 @@ void LEDHandler::printInfo() {
 			Serial.print(", Number Variables: ");
 			Serial.print(number_of_variables[x]);
 			Serial.print(", Layer index: ");
-			Serial.print(layer_index_array[x]);
-			Serial.print(", Layer Effect: ");
-			Serial.println(loaded_layers[layer_index_array[x]].effect->name);
+			Serial.println(layer[x]);
+			//Serial.print(", Layer Effect: ");
+			//Serial.println(loaded_layers[layer_index_array[x]].effect->name);
 		}
 
 	}
@@ -233,6 +245,67 @@ void LEDHandler::printInfo() {
 			Serial.println(animation_variables[x]);
 		}
 	}
-	Serial.println("Potential layer effects");
-	handler_layer_effect_list->printInfo();
+	//Serial.println("Potential layer effects");
+	//handler_layer_effect_list->printInfo();
+}
+
+void LEDHandler::mergeSort(int arr[], int l, int r) {
+	if (l < r) {
+		// Same as (l+r)/2, but avoids overflow for
+		// large l and h
+		int m = l + (r - l) / 2;
+
+		// Sort first and second halves
+		mergeSort(arr, l, m);
+		mergeSort(arr, m + 1, r);
+
+		merge(arr, l, m, r);
+	}
+}
+
+void LEDHandler::merge(int arr[], int l, int m, int r) {
+	int i, j, k;
+	int n1 = m - l + 1;
+	int n2 = r - m;
+
+	/* create temp arrays */
+	int L[n1], R[n2];
+
+	/* Copy data to temp arrays L[] and R[] */
+	for (i = 0; i < n1; i++)
+		L[i] = arr[l + i];
+	for (j = 0; j < n2; j++)
+		R[j] = arr[m + 1 + j];
+
+	/* Merge the temp arrays back into arr[l..r]*/
+	i = 0; // Initial index of first subarray
+	j = 0; // Initial index of second subarray
+	k = l; // Initial index of merged subarray
+	while (i < n1 && j < n2) {
+		if (layer[L[i]] <= layer[R[j]]) {
+			arr[k] = L[i];
+			i++;
+		}
+		else {
+			arr[k] = R[j];
+			j++;
+		}
+		k++;
+	}
+
+	/* Copy the remaining elements of L[], if there
+	are any */
+	while (i < n1) {
+		arr[k] = L[i];
+		i++;
+		k++;
+	}
+
+	/* Copy the remaining elements of R[], if there
+	are any */
+	while (j < n2) {
+		arr[k] = R[j];
+		j++;
+		k++;
+	}
 }

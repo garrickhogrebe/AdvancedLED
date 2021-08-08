@@ -3,7 +3,7 @@
 #include "AdvancedLED4.h"
 #include "Animations.h"
 #include "Loader.h"
-#include "Layers.h"
+
 //
 //LED handler class. Highest level of abstraction
 class LEDHandler {
@@ -22,18 +22,29 @@ public:
 	int animation_variables[NUMBER_OF_VARIABLES];
 	//Array specifying if the variables is in use or not
 	bool variable_in_use[NUMBER_OF_VARIABLES];
+	
+	//Array which states which layer each animation is on
+	int layer[NUMBER_OF_ANIMATIONS];
+	
+	//Sorted array which tells the handler which order to run the animations
+	int play_order[NUMBER_OF_ANIMATIONS];
+
+	//Old Layer Method
 	//Array specifying which layer each animation writes too
-	int layer_index_array[NUMBER_OF_ANIMATIONS];
+	//int layer_index_array[NUMBER_OF_ANIMATIONS];
 	//ToDo Array containing all currently loaded layers
-	class layer loaded_layers[MAX_LAYERS];
+	//class layer loaded_layers[MAX_LAYERS];
+	//List of possible layer techniques to choose from
+	//class layer_effect_list* handler_layer_effect_list;
+	//end old layer method
+
 	//Array Containing dependancies for deleting animations. A value of -1 indicates this animation is a root and independent
 	int dependencies[NUMBER_OF_ANIMATIONS];
 	//Array to tell that an animation has been marked for deletion
 	bool animations_to_delete[NUMBER_OF_ANIMATIONS];
 	//The loader for this handler
 	class Loader* handler_loader;
-	//List of possible layer techniques to choose from
-	class layer_effect_list* handler_layer_effect_list;
+
 	//List of Possible Animations to choose from
 	class animation_list* handler_animation_list;
 	//ToDo triggers to choose from
@@ -77,6 +88,12 @@ public:
 
 	//Prints currently loaded animations and their layer. Prints variables
 	void printInfo();
+
+	//Sorts the animations by layers using merge sort
+	void mergeSort(int arr[], int l, int r);
+
+	//Merge function for merge sort
+	void merge(int arr[], int l, int m, int r);
 
 	//ToDo Send message containing all animations to choose from
 	//ToDo send message containing all layers to choose from

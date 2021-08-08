@@ -53,8 +53,8 @@ extern animation_list main_animation_list;
 
 //~~~~~~~~~~~~~~~~~~~~
 void test(int variable_start, LEDHandler* handler);
-
-
+void test1(int variable_start, LEDHandler* handler);
+void test2(int variable_start, LEDHandler* handler);
 
 
 

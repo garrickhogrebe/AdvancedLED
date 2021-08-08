@@ -57,6 +57,16 @@ void test(int variable_start, LEDHandler* handler) {
 	handler->leds[pos] = CHSV(50, 255, 255);
 }
 
+void test1(int variable_start, LEDHandler* handler) {
+	for (int x = 20; x < 40; x++) {
+		handler->leds[x] = CHSV(150, 255, 255);
+	}
+}
 
-animation Test1(5, "This is Test1", true, test);
-animation Test2(5, "This is Test2", true, test);
+void test2(int variable_start, LEDHandler* handler) {
+	for (int x = 50; x < 90; x++) {
+		handler->leds[x] = CHSV(225, 255, 255);
+	}
+}
+
+
