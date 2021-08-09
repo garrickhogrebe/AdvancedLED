@@ -1,7 +1,6 @@
 #include "LEDHandler.h"
 
 void LEDHandler::initializeHandler() {
-	Serial.println("yeet");
 	//initialize proper values for the handler's memory
 	for (int x = 0; x < NUMBER_OF_ANIMATIONS; x++) {
 		animation_array[x] = NULL;
@@ -17,9 +16,9 @@ void LEDHandler::initializeHandler() {
 		animation_variables[x] = 0;
 		variable_in_use[x] = false;
 	}
-	for (int x = 0; x < MAX_LAYERS; x++) {
+	//for (int x = 0; x < MAX_LAYERS; x++) {
 		//loaded_layers[x] = NULL;
-	}
+	//}
 	handler_animation_list = &main_animation_list;
 	handler_loader = &main_loader;
 	//handler_layer_effect_list = &main_layer_effect_list;
@@ -41,6 +40,7 @@ void LEDHandler::run() {
 	//Serial.println("boot3");
 	deleteMarkedAnimations();
 	//Serial.println("boot4");
+	serialUpdates();
 	//FastLED.show();
 
 }
@@ -82,6 +82,7 @@ void LEDHandler::deleteMarkedAnimations() {
 			deleted = true;
 		}
 		else if (animation_array[dependencies[x]] == NULL && dependencies[x] != -1) {
+			animations_to_delete[x] = false;
 			deleteAnimation(x);
 			deleted = true;
 		}
@@ -160,6 +161,7 @@ void LEDHandler::addAnimation(animation* new_animation, int layer_index, Loader*
 	variable_start_locations[animation_index] = start;
 	start_time[animation_index] = millis();
 	number_of_variables[animation_index] = num_variables;
+	animations_to_delete[animation_index] = false;
 	//ToDo assign the proper layer
 	//layer_index_array[animation_index] = layer_index;
 	layer[animation_index] = layer_index;
@@ -220,24 +222,27 @@ int LEDHandler::cleanVariableArray() {
 }
 
 void LEDHandler::printInfo() {
-	Serial.println("Printing Animations: ");
+	Serial.println("Printing Loaded Animations: ");
 	for (int x = 0; x < NUMBER_OF_ANIMATIONS; x++) {
 		if (animation_array[x] != NULL) {
 			Serial.print(x);
 			Serial.print(": ");
 			Serial.print(animation_array[x]->name);
+			Serial.print(", Variable Start: ");
+			Serial.print(variable_start_locations[x]);
 			Serial.print(", Dependency: ");
 			Serial.print(dependencies[x]);
 			Serial.print(", Number Variables: ");
 			Serial.print(number_of_variables[x]);
-			Serial.print(", Layer index: ");
+			Serial.print(", Layer: ");
 			Serial.println(layer[x]);
 			//Serial.print(", Layer Effect: ");
 			//Serial.println(loaded_layers[layer_index_array[x]].effect->name);
 		}
 
 	}
-	Serial.println("Printing Variables");
+	Serial.println("");
+	Serial.println("Printing Loaded Variables:");
 	for (int x = 0; x < NUMBER_OF_VARIABLES; x++) {
 		if (variable_in_use[x] == true) {
 			Serial.print(x);
@@ -307,5 +312,156 @@ void LEDHandler::merge(int arr[], int l, int m, int r) {
 		arr[k] = R[j];
 		j++;
 		k++;
+	}
+}
+
+void LEDHandler::serialAddAnimation() {
+	int incoming = 0;
+	int number = 0;
+	int number_inputs;
+	Serial.println("Enter Number Corresponding to Animation to Add");
+	handler_animation_list->printAnimations();
+	animation* animation_p = handler_animation_list->start;
+	
+	//Select the animation to add
+	while (1) {
+		if (Serial.available() > 0) {
+			delay(2);
+			incoming = Serial.read();
+			if (incoming != 10) {
+				number = number * 10 + incoming - 48;
+				continue;
+			}
+			Serial.println("Recieved");
+			Serial.println(number);
+			break;
+		}
+	}
+	for (int x = 0; x < number; x++) {
+		animation_p = animation_p->next;
+	}
+
+	//Get inputs from user
+	number_inputs = animation_p->num_inputs;
+	handler_loader->clearLoader();
+
+	number = 0;
+	for (int y = 0; y < number_inputs; y++) {
+		//gotta fill in the variables
+		Serial.print("Enter Variable: ");
+		Serial.println(y);
+		while (1) {
+			if (Serial.available() > 0) {
+				delay(2);
+				incoming = Serial.read();
+				if (incoming != 10) {
+					number = number * 10 + incoming - 48;
+					continue;
+				}
+				Serial.println("Recieved: ");
+				Serial.println(number);
+				handler_loader->append(number);
+				number = 0;
+				break;
+			}
+		}
+	}
+
+	//Ask for layer
+	Serial.println("Enter a number for the layer");
+	while (1) {
+		if (Serial.available() > 0) {
+			delay(2);
+			incoming = Serial.read();
+			if (incoming != 10) {
+				number = number * 10 + incoming - 48;
+				continue;
+			}
+			Serial.println("Recieved");
+			Serial.println(number);
+			break;
+		}
+	}
+
+	//Add the Animation
+	addAnimation(animation_p, number, handler_loader);
+}
+
+void LEDHandler::serialDeleteAnimation() {
+	int number = 0;
+	int incoming = 0;
+	//Print loaded animations
+	Serial.println("Enter a number corresponding to a animation to delete");
+	for (int x = 0; x < NUMBER_OF_ANIMATIONS; x++) {
+		if (animation_array[x] != NULL) {
+			Serial.print(x);
+			Serial.print(": ");
+			Serial.print(animation_array[x]->name);
+			Serial.print(", Variable Start: ");
+			Serial.print(variable_start_locations[x]);
+			Serial.print(", Dependency: ");
+			Serial.print(dependencies[x]);
+			Serial.print(", Number Variables: ");
+			Serial.print(number_of_variables[x]);
+			Serial.print(", Layer: ");
+			Serial.println(layer[x]);
+			//Serial.print(", Layer Effect: ");
+			//Serial.println(loaded_layers[layer_index_array[x]].effect->name);
+		}
+
+	}
+	while (1) {
+		if (Serial.available() > 0) {
+			delay(2);
+			incoming = Serial.read();
+			if (incoming != 10) {
+				number = number * 10 + incoming - 48;
+				continue;
+			}
+			Serial.println("Recieved");
+			Serial.println(number);
+			break;
+		}
+	}
+	markForDeletion(number);
+}
+
+void LEDHandler::serialEditLayer() {
+
+}
+
+void LEDHandler::serialUpdates() {
+	int incoming;
+	int number = 0;
+	if (Serial.available() > 0) {
+		while (Serial.available()) {
+			incoming = Serial.read();
+		}
+		Serial.println("Enter 0 to add animation, 1 to delete animation");
+		while (1) {
+			if (Serial.available() > 0) {
+				delay(2);
+				incoming = Serial.read();
+				if (incoming != 10) {
+					number = number * 10 + incoming - 48;
+					continue;
+				}
+				Serial.println("Recieved");
+				Serial.println(number);
+				break;
+			}
+		}
+		if (number == 0) {
+			serialAddAnimation();
+		}
+		else if (number == 1) {
+			serialDeleteAnimation();
+		}
+		else {
+			printf("Invalid Selection");
+		}
+	}
+	else {
+		return;
 	}
 }

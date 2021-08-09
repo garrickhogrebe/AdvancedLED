@@ -10,16 +10,22 @@ class LEDHandler {
 public:
 	//Array of LEDS
 	CRGB leds[NUM_LEDS];
+
 	//Array containing all currently loaded animations
 	class animation* animation_array[NUMBER_OF_ANIMATIONS];
+
 	//Array showing where to find each animations variables for the correspodning index
 	int variable_start_locations[NUMBER_OF_ANIMATIONS];
+
 	//Array containing how many variables each animation has
 	int number_of_variables[NUMBER_OF_ANIMATIONS];
+
 	//Array containing time values for each animation
 	unsigned long long int start_time[NUMBER_OF_ANIMATIONS];
+
 	//Array containing all of the variables for each animation
 	int animation_variables[NUMBER_OF_VARIABLES];
+
 	//Array specifying if the variables is in use or not
 	bool variable_in_use[NUMBER_OF_VARIABLES];
 	
@@ -40,13 +46,16 @@ public:
 
 	//Array Containing dependancies for deleting animations. A value of -1 indicates this animation is a root and independent
 	int dependencies[NUMBER_OF_ANIMATIONS];
+
 	//Array to tell that an animation has been marked for deletion
 	bool animations_to_delete[NUMBER_OF_ANIMATIONS];
+
 	//The loader for this handler
 	class Loader* handler_loader;
 
 	//List of Possible Animations to choose from
 	class animation_list* handler_animation_list;
+
 	//ToDo triggers to choose from
 	//ToDo color palletes to choose from
 
@@ -94,6 +103,18 @@ public:
 
 	//Merge function for merge sort
 	void merge(int arr[], int l, int m, int r);
+
+	//Load a new animation through the serial console
+	void serialAddAnimation();
+
+	//Delete an animation through the serial console
+	void serialDeleteAnimation();
+
+	//ToDo Edit an animation's layer through the serial console
+	void serialEditLayer();
+
+	//Get user instructions from the serial monitor
+	void serialUpdates();
 
 	//ToDo Send message containing all animations to choose from
 	//ToDo send message containing all layers to choose from

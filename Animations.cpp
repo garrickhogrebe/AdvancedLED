@@ -41,6 +41,7 @@ void animation_list::append(class animation* new_animation) {
 
 void animation_list::printAnimations() {
 	animation* current = start;
+	Serial.println("All Possible Animations to choose from:");
 	for (int i = 0; i < size; i++) {
 		Serial.print(i);
 		Serial.print(": ");
@@ -51,6 +52,10 @@ void animation_list::printAnimations() {
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Animation Play Functions Below
 
+
+animation Test(5, "This is Test", true, test);
+animation Test1(4, "This is Test1", true, test1);
+animation Test2(5, "This is Test2", true, test2);
 
 void test(int variable_start, LEDHandler* handler) {
 	int pos = beatsin16(10, 0, 160);
