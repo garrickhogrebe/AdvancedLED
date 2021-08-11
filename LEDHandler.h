@@ -3,6 +3,7 @@
 #include "AdvancedLED4.h"
 #include "Animations.h"
 #include "Loader.h"
+#include "AudioSampling.h"
 
 //
 //LED handler class. Highest level of abstraction
@@ -64,6 +65,9 @@ public:
 
 	//Variable specifying the index of whatever animation is currently being played
 	int animation_index_number;
+
+	//Array of band values. This is the handler's local copy
+	int bandValues[NUM_BANDS];
 
 	//initializes the LEDHandler
 	void initializeHandler();

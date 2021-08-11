@@ -53,24 +53,34 @@ void animation_list::printAnimations() {
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Animation Play Functions Below
 
 
-animation Test(5, "This is Test", true, test);
-animation Test1(4, "This is Test1", true, test1);
-animation Test2(5, "This is Test2", true, test2);
+animation Test(4, "This is Test", true, test);
+animation Test1(0, "Print band values", true, test1);
+animation Test2(3, "This is Test2", true, test2);
 
 void test(int variable_start, LEDHandler* handler) {
-	int pos = beatsin16(10, 0, 160);
-	handler->leds[pos] = CHSV(50, 255, 255);
+	int start = handler->animation_variables[variable_start];
+	int end = handler->animation_variables[variable_start+1];
+	int color = handler->animation_variables[variable_start+2];
+	int bpm = handler->animation_variables[variable_start+3];
+	int pos = beatsin16(bpm, start, end);
+	handler->leds[pos] = CHSV(color, 255, 255);
 }
 
 void test1(int variable_start, LEDHandler* handler) {
-	for (int x = 20; x < 40; x++) {
-		handler->leds[x] = CHSV(150, 255, 255);
+	for (int x = 0; x < NUM_BANDS; x++) {
+		Serial.print("Band number ");
+		Serial.print(x);
+		Serial.print(": ");
+		Serial.println(handler->bandValues[x]);
 	}
 }
 
 void test2(int variable_start, LEDHandler* handler) {
-	for (int x = 50; x < 90; x++) {
-		handler->leds[x] = CHSV(225, 255, 255);
+	int start = handler->animation_variables[variable_start];
+	int end = handler->animation_variables[variable_start + 1];
+	int color = handler->animation_variables[variable_start + 2];
+	for (int x = start; x <= end; x++) {
+		handler->leds[x] = CHSV(color, 255, 255);
 	}
 }
 

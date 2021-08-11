@@ -3,6 +3,7 @@
 #include "AdvancedLED4.h"
 
 extern int gBandValues[NUM_BANDS];
+extern bool new_audio_data;
 
 //Task to run on core 0 which will sample audio data and perform FFT
 void sampleTask(void* parameter);

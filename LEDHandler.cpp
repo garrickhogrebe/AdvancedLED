@@ -50,7 +50,19 @@ void LEDHandler::bluetoothCheck() {
 }
 
 void LEDHandler::audioUpdates() {
-
+	//Take lock
+	xSemaphoreTake(bandLock, portMAX_DELAY);
+	//If no new measurements, leave
+	if (new_audio_data == false) {
+		xSemaphoreGive(bandLock);
+		return;
+	}//Otherwise copy the data
+	for (int x = 0; x < NUM_BANDS; x++) {
+		bandValues[x] = gBandValues[x];
+	}
+	new_audio_data = false;
+	//RELEASE THE KRACKEN (lock)
+	xSemaphoreGive(bandLock);
 }
 
 void LEDHandler::playAnimations() {

@@ -9,6 +9,7 @@ double vImag[SAMPLES];
 arduinoFFT FFT = arduinoFFT(vReal, vImag, SAMPLES, SAMPLING_FREQ);
 unsigned int sampling_period_us = round(1000000 * (1.0 / SAMPLING_FREQ));
 unsigned long newTime;
+bool new_audio_data = false;
 
 void sampleTask(void* parameter) {
 
@@ -71,7 +72,15 @@ void sampleTask(void* parameter) {
         
         //ToDo Send the data to the handler
         //Take lock
+        xSemaphoreTake(bandLock, portMAX_DELAY);
         //Copy and inform new measurements have arrived
+        for (int x = 0; x < NUM_BANDS; x++) {
+            gBandValues[x] = bandValues[x];
+        }
+        new_audio_data = true;
         //Give Lock
+        xSemaphoreGive(bandLock);
+        
+     
 	}
 }
