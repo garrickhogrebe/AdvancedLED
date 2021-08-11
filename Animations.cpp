@@ -71,7 +71,7 @@ void test1(int variable_start, LEDHandler* handler) {
 		Serial.print("Band number ");
 		Serial.print(x);
 		Serial.print(": ");
-		Serial.println(handler->bandValues[x]);
+		Serial.println(handler->handler_audio_data->bandValues[x]);
 	}
 }
 

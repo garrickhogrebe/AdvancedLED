@@ -66,8 +66,8 @@ public:
 	//Variable specifying the index of whatever animation is currently being played
 	int animation_index_number;
 
-	//Array of band values. This is the handler's local copy
-	int bandValues[NUM_BANDS];
+	//Handlers audio data
+	class audioData* handler_audio_data;
 
 	//initializes the LEDHandler
 	void initializeHandler();

@@ -21,6 +21,7 @@ void LEDHandler::initializeHandler() {
 	//}
 	handler_animation_list = &main_animation_list;
 	handler_loader = &main_loader;
+	handler_audio_data = &mainAudioData;
 	//handler_layer_effect_list = &main_layer_effect_list;
 	current_time = millis();
 
@@ -50,19 +51,7 @@ void LEDHandler::bluetoothCheck() {
 }
 
 void LEDHandler::audioUpdates() {
-	//Take lock
-	xSemaphoreTake(bandLock, portMAX_DELAY);
-	//If no new measurements, leave
-	if (new_audio_data == false) {
-		xSemaphoreGive(bandLock);
-		return;
-	}//Otherwise copy the data
-	for (int x = 0; x < NUM_BANDS; x++) {
-		bandValues[x] = gBandValues[x];
-	}
-	new_audio_data = false;
-	//RELEASE THE KRACKEN (lock)
-	xSemaphoreGive(bandLock);
+	handler_audio_data->getNewData();
 }
 
 void LEDHandler::playAnimations() {
@@ -449,7 +438,7 @@ void LEDHandler::serialUpdates() {
 		while (Serial.available()) {
 			incoming = Serial.read();
 		}
-		Serial.println("Enter 0 to add animation, 1 to delete animation");
+		Serial.println("Enter 0 to add animation, 1 to delete animation, 2 to calibrate noise filters");
 		while (1) {
 			if (Serial.available() > 0) {
 				delay(2);
@@ -468,6 +457,9 @@ void LEDHandler::serialUpdates() {
 		}
 		else if (number == 1) {
 			serialDeleteAnimation();
+		}
+		else if (number == 2) {
+			handler_audio_data->calibrateNoise();
 		}
 		else {
 			printf("Invalid Selection");
