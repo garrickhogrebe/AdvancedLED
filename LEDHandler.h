@@ -4,11 +4,15 @@
 #include "Animations.h"
 #include "Loader.h"
 #include "AudioSampling.h"
+#include "BluetoothSerial.h"
 
 //
 //LED handler class. Highest level of abstraction
 class LEDHandler {
 public:
+	//Bluetooth
+	BluetoothSerial ESP_BT;
+
 	//Array of LEDS
 	CRGB leds[NUM_LEDS];
 
@@ -125,6 +129,8 @@ public:
 
 	//
 	void writeLed(int pos, uint8_t writeType, CRGB color);
+
+	void clearHandler();
 
 	//ToDo Send message containing all animations to choose from
 	//ToDo send message containing all layers to choose from

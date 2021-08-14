@@ -10,6 +10,3 @@ void Loader::append(int new_int) {
 	variables[num_loaded++] = new_int;
 }
 
-void Loader::loadByString() {
-
-}

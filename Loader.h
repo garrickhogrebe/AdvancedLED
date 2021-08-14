@@ -16,9 +16,6 @@ public:
 	//ToDo appends a variable to the loader class
 	void append(int new_int);
 
-	//ToDo fills in the loader class from a string
-	void loadByString();
-
 
 };
 

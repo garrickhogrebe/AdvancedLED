@@ -54,41 +54,54 @@ void animation_list::printAnimations() {
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Animation Play Functions Below
 
 
-animation Test(4, "This is Test", true, test);
-animation Test1(0, "Print band values", true, test1);
-animation Test2(3, "This is Test2", true, test2);
+
+animation FillSolid(4, "fill solid", true, fillSolid);
+animation Sinelon(4, "Sinelon", false, sinelon, sinelonLoad);
+animation PrintBandValues(0, "Print band values", true, printBandValues);
 animation PrintPeaks(0, "Print band peaks", true, printPeaks);
 animation PrintAverages(0, "Print band averages", true, printAverages);
 animation PeakLerpObject(4, "lerp for band peak", false, peakLerp, peakLerpLoad);
 animation PeakLerpSpectrum(4, "Lerp for all bands peak", true, peakLerpSpectrum);
 animation FadeBlock(4, "Block that fades away", false, fadeBlock, fadeBlockLoad);
-animation FillSolid(4, "fill solid", true, fillSolid);
 animation GravityBall(4, "gravity ball", false, gravityBall, gravityBallLoad);
 
-void test(int variable_start, LEDHandler* handler) {
+void sinelon(int variable_start, LEDHandler* handler) {
 	int start = handler->animation_variables[variable_start];
 	int end = handler->animation_variables[variable_start+1];
 	int color = handler->animation_variables[variable_start+2];
 	int bpm = handler->animation_variables[variable_start+3];
+	int* prev = &handler->animation_variables[variable_start + 4];
 	int pos = beatsin16(bpm, start, end);
-	handler->leds[pos] = CHSV(color, 255, 255);
+	int for_start;
+	int for_end;
+	if (*prev > pos) {
+		for_start = pos;
+		for_end = *prev;
+	}
+	else {
+		for_start = *prev;
+		for_end = pos;
+	}
+	for (int x = for_start; x <= for_end; x++) {
+		handler->writeLed(x, handler->write_type[handler->animation_index_number], CHSV(color, 255, 255));
+	}
+	*prev = pos;
+	
+	//handler->leds[pos] = CHSV(color, 255, 255);
+}
+void sinelonLoad(Loader* loader) {
+	int start = loader->variables[0];
+	int end = loader->variables[1];
+	int bpm = loader->variables[3];
+	loader->append(beatsin16(bpm, start, end));
 }
 
-void test1(int variable_start, LEDHandler* handler) {
+void printBandValues(int variable_start, LEDHandler* handler) {
 	for (int x = 0; x < NUM_BANDS; x++) {
 		Serial.print("Band number ");
 		Serial.print(x);
 		Serial.print(": ");
 		Serial.println(handler->handler_audio_data->bandValues[x]);
-	}
-}
-
-void test2(int variable_start, LEDHandler* handler) {
-	int start = handler->animation_variables[variable_start];
-	int end = handler->animation_variables[variable_start + 1];
-	int color = handler->animation_variables[variable_start + 2];
-	for (int x = start; x <= end; x++) {
-		handler->leds[x] = CHSV(color, 255, 255);
 	}
 }
 
@@ -177,8 +190,8 @@ void fadeBlock(int variable_start, LEDHandler* handler) {
 		handler->leds[x] = CHSV(color, 255, *bright);
 	}
 	//fade_rate = 255 - fade_rate;
-	//*bright = (*bright * fade_rate) / 255;
-	*bright -= fade_rate;
+	*bright = (*bright * (255 - fade_rate)) / 255;
+	//*bright -= fade_rate;
 	if (*bright <= 0) {
 		handler->markForDeletion(handler->animation_index_number);
 	}
@@ -220,8 +233,8 @@ void gravityBall(int variable_start, LEDHandler* handler) {
 	else {
 		handler->leds[*pos] = CHSV(color, 255, 255);
 	}
-	Serial.print("pos = ");
-	Serial.println(*pos);
+	//Serial.print("pos = ");
+	//Serial.println(*pos);
 
 }
 

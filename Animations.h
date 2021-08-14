@@ -56,9 +56,9 @@ public:
 extern animation_list main_animation_list;
 
 //~~~~~~~~~~~~~~~~~~~~
-void test(int variable_start, LEDHandler* handler);
-void test1(int variable_start, LEDHandler* handler);
-void test2(int variable_start, LEDHandler* handler);
+void sinelon(int variable_start, LEDHandler* handler);
+void sinelonLoad(Loader* loader);
+void printBandValues(int variable_start, LEDHandler* handler);
 void printPeaks(int variable_start, LEDHandler* handler);
 void printAverages(int variable_start, LEDHandler* handler);
 void peakLerp(int variable_start, LEDHandler* handler);

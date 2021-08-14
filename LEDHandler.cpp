@@ -1,6 +1,9 @@
 #include "LEDHandler.h"
 
 void LEDHandler::initializeHandler() {
+	//Start bluetooth
+	ESP_BT.begin("Fuck Plaza"); //Name of your Bluetooth Signal
+
 	//initialize proper values for the handler's memory
 	for (int x = 0; x < NUMBER_OF_ANIMATIONS; x++) {
 		animation_array[x] = NULL;
@@ -32,6 +35,7 @@ void LEDHandler::initializeHandler() {
 }
 
 void LEDHandler::run() {
+	bluetoothCheck();
 	//Serial.println("boot");
 	audioUpdates();
 	//Serial.println("boot1");
@@ -47,6 +51,87 @@ void LEDHandler::run() {
 }
 
 void LEDHandler::bluetoothCheck() {
+	int incoming;
+	int number = 0;
+	int layer;
+	int writeType;
+	animation* new_animation = handler_animation_list->start;
+	if (!ESP_BT.available()) { return; }
+	incoming = ESP_BT.read();
+	Serial.print("Recieved"); Serial.println(incoming);
+	if (incoming == 117) {//begin serial upload
+		//Clear current handler
+		clearHandler();
+
+		while(1) {
+			//clear loader
+			handler_loader->clearLoader();
+			//get id
+			while (1) {
+				if (ESP_BT.available() > 0) {
+					incoming = ESP_BT.read();
+					if (incoming == 'e') {
+						return;
+					}
+					if (incoming != '/') {
+						number = number * 10 + incoming - 48;
+						continue;
+					}
+					break;
+				}
+			}
+
+			//Get proper animation from id
+			for (int i = 0; i < number; i++) {
+				new_animation = new_animation->next;
+			}
+			number = 0;
+			//Load all variables
+			while (1) {
+				if (ESP_BT.available() > 0) {
+					incoming = ESP_BT.read();
+					if (incoming == 'o') {
+						break;
+					}
+					if (incoming == '/') {
+						handler_loader->append(number);
+						number = 0;
+						continue;
+					}
+					number = number * 10 + incoming - 48;
+				}
+
+			}			//get layer and write type
+			while (1) {
+				if (ESP_BT.available() > 0) {
+					incoming = ESP_BT.read();
+					if (incoming == '/') {
+						layer = number;
+						number = 0;
+						break;
+					}
+					number = number * 10 + incoming - 48;
+				}
+			}
+
+			while (1) {
+				if (ESP_BT.available() > 0) {
+					incoming = ESP_BT.read();
+					if (incoming == '/') {
+						writeType = number;
+						number = 0;
+						break;
+					}
+					number = number * 10 + incoming - 48;
+				}
+			}
+			//add the animation
+			addAnimation(new_animation, layer, handler_loader, writeType);
+			new_animation = handler_animation_list->start;
+		}
+	}
+
+
 
 }
 
@@ -511,5 +596,13 @@ void LEDHandler::writeLed(int pos, uint8_t writeType, CRGB color) {
 			leds[pos].b = (leds[pos].b + color.b) / 2;
 			break;
 	}
+	//If greater brightness then overwrite, otherwise add
 
+}
+
+void LEDHandler::clearHandler() {
+	for (int x = 0; x < NUMBER_OF_ANIMATIONS; x++) {
+		markForDeletion(x);
+	}
+	deleteMarkedAnimations();
 }
