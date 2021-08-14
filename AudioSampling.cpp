@@ -85,6 +85,10 @@ void sampleTask(void* parameter) {
 }
 
 void audioData::getNewData() {
+    //save previous
+    for (int x = 0; x < NUM_BANDS; x++) {
+        prevBandValues[x] = bandValues[x];
+    }
     //Take lock
     xSemaphoreTake(bandLock, portMAX_DELAY);
     //If no new measurements, leave
@@ -99,10 +103,23 @@ void audioData::getNewData() {
     //RELEASE THE KRACKEN (lock)
     xSemaphoreGive(bandLock);
     calcWeightedPeaks();
+    calcFractPeak();
+    calcWeightedAverages();
+    for (int x = 0; x < NUM_BANDS; x++) {
+        rising[x] = false;
+        decreasing[x] = false;
+        if (bandValues[x] > prevBandValues[x]) {
+            rising[x] = true;
+        }
+        if (bandValues[x] < prevBandValues[x]) {
+            decreasing[x] = true;
+        }
+    }
 }
 
-void audioData::calibrateNoise() {
+void audioData::calibrateNoise(CRGB arr[]) {
     int success = 0;
+    int hue_shift = 1;
 
     //reset all noise filters to zero
     for (int i = 0; i < NUM_BANDS; i++) {
@@ -111,6 +128,11 @@ void audioData::calibrateNoise() {
 
     //Loop until all bands have been properly adjusted
     while (1) {
+        //Run some leds to create noise
+        fill_rainbow(arr, NUM_LEDS, hue_shift, 7);
+        hue_shift = (hue_shift + 1) % 256;
+        FastLED.show();
+
         //Take lock
         
         xSemaphoreTake(bandLock, portMAX_DELAY);
@@ -129,7 +151,7 @@ void audioData::calibrateNoise() {
         if (success > 50) {
             Serial.println("Noise Calibration Complete");
             for (int x = 0; x < NUM_BANDS; x++) {
-                bandNoiseFilters[x] += 200;
+                bandNoiseFilters[x] += 300;
                 Serial.print("Band: ");
                 Serial.print(x);
                 Serial.print(", Noise: ");
@@ -148,9 +170,34 @@ void audioData::calcWeightedPeaks() {
         }
         if (bandValues[x] > weightedPeaks[x]) {
             weightedPeaks[x] = bandValues[x];
+            peakOccuring[x] = true;
         }
         else {
-            weightedPeaks[x] = (weightedPeaks[x] * 999 + bandValues[x]) / 1000;
+            weightedPeaks[x] = (weightedPeaks[x] * 99 + bandValues[x]) / 100;
         }
+    }
+}
+
+void audioData::calcFractPeak() {
+    for (int x = 0; x < NUM_BANDS; x++) {
+        if (weightedPeaks[x] == 0) {
+            fractPeak[x] = 0;
+            continue;
+        }
+        fractPeak[x] = (bandValues[x] * 255) / weightedPeaks[x];
+    }
+}
+
+void audioData::calcWeightedAverages() {
+    for (int x = 0; x < NUM_BANDS; x++) {
+        
+        if (bandValues[x] == 0) {
+            weightedAverages[x] = (weightedAverages[x]*199)/200;
+            if (weightedAverages[x] < 0) {
+                weightedAverages[x] = 0;
+            }
+        }
+        
+        weightedAverages[x] = (weightedAverages[x] * 60 + 40*bandValues[x]) / 100;
     }
 }

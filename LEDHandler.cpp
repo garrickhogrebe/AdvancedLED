@@ -111,7 +111,7 @@ void LEDHandler::markForDeletion(int index) {
 	animations_to_delete[index] = true;
 }
 
-void LEDHandler::addAnimation(animation* new_animation, int layer_index, Loader* loader) {
+void LEDHandler::addAnimation(animation* new_animation, int layer_index, Loader* loader, uint8_t writeType) {
 	int x;
 	int animation_index;
 	int empty_in_row = 0;
@@ -163,6 +163,7 @@ void LEDHandler::addAnimation(animation* new_animation, int layer_index, Loader*
 	start_time[animation_index] = millis();
 	number_of_variables[animation_index] = num_variables;
 	animations_to_delete[animation_index] = false;
+	write_type[animation_index] = writeType;
 	//ToDo assign the proper layer
 	//layer_index_array[animation_index] = layer_index;
 	layer[animation_index] = layer_index;
@@ -368,6 +369,24 @@ void LEDHandler::serialAddAnimation() {
 		}
 	}
 
+	//Ask for write_type
+	Serial.println("Enter a number for the write type");
+	while (1) {
+		if (Serial.available() > 0) {
+			delay(2);
+			incoming = Serial.read();
+			if (incoming != 10) {
+				number = number * 10 + incoming - 48;
+				continue;
+			}
+			Serial.println("Recieved");
+			Serial.println(number);
+			break;
+		}
+	}
+	uint8_t writeType = number;
+
+	number = 0;
 	//Ask for layer
 	Serial.println("Enter a number for the layer");
 	while (1) {
@@ -385,7 +404,7 @@ void LEDHandler::serialAddAnimation() {
 	}
 
 	//Add the Animation
-	addAnimation(animation_p, number, handler_loader);
+	addAnimation(animation_p, number, handler_loader, writeType);
 }
 
 void LEDHandler::serialDeleteAnimation() {
@@ -459,7 +478,7 @@ void LEDHandler::serialUpdates() {
 			serialDeleteAnimation();
 		}
 		else if (number == 2) {
-			handler_audio_data->calibrateNoise();
+			handler_audio_data->calibrateNoise(leds);
 		}
 		else {
 			printf("Invalid Selection");
@@ -468,4 +487,29 @@ void LEDHandler::serialUpdates() {
 	else {
 		return;
 	}
+}
+
+void LEDHandler::writeLed(int pos, uint8_t writeType, CRGB color) {
+	if (pos >= NUM_LEDS) return;
+	if (pos < 0) return;
+
+	switch (writeType) {
+		case 0://Zero for completely overwrite
+			leds[pos] = color;
+			break;
+		case 1://one for additive write
+			leds[pos] += color;
+			break;
+		case 2://brighter one wins
+			if (leds[pos].getLuma() < color.getLuma()) {
+				leds[pos] = color;
+			}
+			break;
+		case 3: // average them
+			leds[pos].r = (leds[pos].r + color.r) / 2;
+			leds[pos].g = (leds[pos].g + color.g) / 2;
+			leds[pos].b = (leds[pos].b + color.b) / 2;
+			break;
+	}
+
 }

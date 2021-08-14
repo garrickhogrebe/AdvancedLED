@@ -36,6 +36,9 @@ public:
 	//Sorted array which tells the handler which order to run the animations
 	int play_order[NUMBER_OF_ANIMATIONS];
 
+	//Array containing how to write each animation
+	uint8_t write_type[NUMBER_OF_ANIMATIONS];
+
 	//Old Layer Method
 	//Array specifying which layer each animation writes too
 	//int layer_index_array[NUMBER_OF_ANIMATIONS];
@@ -94,7 +97,7 @@ public:
 	void deleteAnimation(int index);
 
 	//ToDo (just layer part) Adds an animation to the handlers animation array. Need to update parameters
-	void addAnimation(animation* new_animation, int layer_index, Loader* loader);
+	void addAnimation(animation* new_animation, int layer_index, Loader* loader, uint8_t writeType = 1);
 
 	//defragments the variable array, returns the first available memory location
 	int cleanVariableArray();
@@ -119,6 +122,9 @@ public:
 
 	//Get user instructions from the serial monitor
 	void serialUpdates();
+
+	//
+	void writeLed(int pos, uint8_t writeType, CRGB color);
 
 	//ToDo Send message containing all animations to choose from
 	//ToDo send message containing all layers to choose from

@@ -3,6 +3,8 @@
 #include "AdvancedLED4.h"
 #include "Loader.h"
 #include "LEDHandler.h"
+#include "AudioSampling.h"
+#include "Utilities.h"
 
 
 
@@ -15,8 +17,10 @@ public:
 	bool standard_load;
 	//the function it plays to update leds
 	void (*play)(int start_location, class LEDHandler* handler);
+
 	//function for called to return how many variables this animation requires to be loaded into the handler
 	int determineNumVariables(Loader* loader);
+
 	//the function it uses to be loaded if it is non-standard. Returns the number of variables the function will use
 	void (*altLoad)(Loader* loader);
 	//Name of this animation
@@ -29,7 +33,7 @@ public:
 
 
 	//ToDo constructor
-	animation(int number_of_inputs, String animation_name, bool load_type, void (*play_function)(int, LEDHandler*));
+	animation(int number_of_inputs, String animation_name, bool load_type, void (*play_function)(int, LEDHandler*), void (*load_function)(Loader*) = 0);
 
 };
 
@@ -55,9 +59,16 @@ extern animation_list main_animation_list;
 void test(int variable_start, LEDHandler* handler);
 void test1(int variable_start, LEDHandler* handler);
 void test2(int variable_start, LEDHandler* handler);
-
-
-
+void printPeaks(int variable_start, LEDHandler* handler);
+void printAverages(int variable_start, LEDHandler* handler);
+void peakLerp(int variable_start, LEDHandler* handler);
+void peakLerpLoad(Loader* loader);
+void peakLerpSpectrum(int variable_start, LEDHandler* handler);
+void fadeBlock(int variable_start, LEDHandler* handler);
+void fadeBlockLoad(Loader* loader);
+void fillSolid(int variable_start, LEDHandler* handler);
+void gravityBall(int variable_start, LEDHandler* hanlder);
+void gravityBallLoad(Loader* loader);
 
 
 
