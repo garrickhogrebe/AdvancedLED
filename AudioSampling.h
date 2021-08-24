@@ -16,6 +16,7 @@ public:
 	int bandMultipliers[NUM_BANDS];
 
 	int bandNoiseFilters[NUM_BANDS] = { 3300, 3400, 3600, 3400, 3300, 3600, 3500, 3500, 3600, 3700, 3600, 3900, 3900, 4100, 4200, 4000 };
+	//{ 2000, 2000, 2000, 2000 ,2000 ,2000, 600, 600,600,600,600,600,600,600,600,600}
 
 	int weightedAverages[NUM_BANDS];
 
@@ -30,6 +31,10 @@ public:
 	bool rising[NUM_BANDS];
 
 	bool decreasing[NUM_BANDS];
+
+	int total_current;
+
+	int total_peak = 0;
 
 	//8bit fraction of how much each band is present compared to its peak
 	uint8_t fractPeak[NUM_BANDS];

@@ -23,6 +23,7 @@ void sampleTask(void* parameter) {
         }
         //Serial.println("2");
         // Sample the audio pin
+        //btStop();
         for (int i = 0; i < SAMPLES; i++) {
             newTime = micros();
             vReal[i] = analogRead(AUDIO_IN_PIN); // A conversion takes about 9.7uS on an ESP32
@@ -75,6 +76,7 @@ void sampleTask(void* parameter) {
         //Copy and inform new measurements have arrived
         for (int x = 0; x < NUM_BANDS; x++) {
             gBandValues[x] = bandValues[x];
+            //Serial.println(bandValues[x]);
         }
         new_audio_data = true;
         //Give Lock
@@ -105,7 +107,9 @@ void audioData::getNewData() {
     calcWeightedPeaks();
     calcFractPeak();
     calcWeightedAverages();
+    total_current = 0;
     for (int x = 0; x < NUM_BANDS; x++) {
+        total_current += bandValues[x];
         rising[x] = false;
         decreasing[x] = false;
         if (bandValues[x] > prevBandValues[x]) {
@@ -176,6 +180,17 @@ void audioData::calcWeightedPeaks() {
             weightedPeaks[x] = (weightedPeaks[x] * 99 + bandValues[x]) / 100;
         }
     }
+    //do again for the total
+    if (total_current == 0) {//dont adjust if nothing is playing
+        return;
+    }
+    if (total_current > total_peak) {
+        total_peak = total_current;
+    }
+    else {
+        total_peak = (total_peak * 99 + total_current) / 100;
+    }
+
 }
 
 void audioData::calcFractPeak() {

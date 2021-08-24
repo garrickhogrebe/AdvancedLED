@@ -69,7 +69,18 @@ void fadeBlockLoad(Loader* loader);
 void fillSolid(int variable_start, LEDHandler* handler);
 void gravityBall(int variable_start, LEDHandler* hanlder);
 void gravityBallLoad(Loader* loader);
+void beatBar(int variable_start, LEDHandler* handler);
+void beatBarLoad(Loader* loader);
+void beatDetector(int variable_start, LEDHandler* handler);
+void beatDetectorLoad(Loader* loader);
+void zoomer(int variable_start, LEDHandler* handler);
+void tetris(int variable_start, LEDHandler* handler);
+void tetrisLoad(Loader* loader);
+void musicColor(int variable_start, LEDHandler* handler);
+void musicColorLoad(Loader* loader);
+void musicColorVolume(int variable_start, LEDHandler* handler);
+void musicColorVolumeLoad(Loader* loader);
+void duelingBars(int variable_start, LEDHandler* handler);
+void duelingBarSender(int variable_start, LEDHandler* handler);
 
-
-
-#endif
+#endif 

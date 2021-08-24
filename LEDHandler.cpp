@@ -175,7 +175,7 @@ void LEDHandler::deleteMarkedAnimations() {
 	}
 	//A dependency may of been deleted so run through again until no dependencies are deleted
 	if (deleted) {
-		Serial.println("MORE");
+		//Serial.println("MORE");
 		deleteMarkedAnimations();
 	}
 	return;
@@ -596,7 +596,7 @@ void LEDHandler::writeLed(int pos, uint8_t writeType, CRGB color) {
 			leds[pos].b = (leds[pos].b + color.b) / 2;
 			break;
 	}
-	//If greater brightness then overwrite, otherwise add
+	//If greater brightness then overwrite, otherwise addt
 
 }
 

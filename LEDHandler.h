@@ -4,7 +4,7 @@
 #include "Animations.h"
 #include "Loader.h"
 #include "AudioSampling.h"
-#include "BluetoothSerial.h"
+
 
 //
 //LED handler class. Highest level of abstraction

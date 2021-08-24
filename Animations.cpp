@@ -64,6 +64,15 @@ animation PeakLerpObject(4, "lerp for band peak", false, peakLerp, peakLerpLoad)
 animation PeakLerpSpectrum(4, "Lerp for all bands peak", true, peakLerpSpectrum);
 animation FadeBlock(4, "Block that fades away", false, fadeBlock, fadeBlockLoad);
 animation GravityBall(4, "gravity ball", false, gravityBall, gravityBallLoad);
+animation BeatBar(5, "Beat Bar", false, beatBar, beatBarLoad);
+animation BeatDector(4, "Beat Detector", false, beatDetector, beatDetectorLoad);
+animation Zoomer(4, "Zoomer", true, zoomer);
+animation Tetris(6, "Tetris", false, tetris, tetrisLoad);
+animation MusicColor(4, "Music Color", false, musicColor, musicColorLoad);
+animation MusicColorVolume(5, "Music Color Volume", false, musicColorVolume, musicColorVolumeLoad);
+animation DuelingBars(8, "Deuling Bars", true, duelingBars);
+animation DuelingBarSender(5, "Deuling Bar Sender", true, duelingBarSender);
+
 
 void sinelon(int variable_start, LEDHandler* handler) {
 	int start = handler->animation_variables[variable_start];
@@ -71,7 +80,7 @@ void sinelon(int variable_start, LEDHandler* handler) {
 	int color = handler->animation_variables[variable_start+2];
 	int bpm = handler->animation_variables[variable_start+3];
 	int* prev = &handler->animation_variables[variable_start + 4];
-	int pos = beatsin16(bpm, start, end);
+	int pos = beatsin16(bpm, start, end); 
 	int for_start;
 	int for_end;
 	if (*prev > pos) {
@@ -246,4 +255,350 @@ void gravityBallLoad(Loader* loader) {
 	//Change make bi directional
 	loader->append(sqrt(2*gravity * (end - start)) - 1);
 	loader->append(0);
+}
+
+void beatBar(int variable_start, LEDHandler* handler) {
+	int band = handler->animation_variables[variable_start];
+	int start = handler->animation_variables[variable_start+1];
+	int end = handler->animation_variables[variable_start+2];
+	int color = handler->animation_variables[variable_start + 3];
+	int locality = handler->animation_variables[variable_start+4];
+	int *weighted_pos = &handler->animation_variables[variable_start+5];
+	class audioData* audio = handler->handler_audio_data;
+
+
+	//Lerp between current band value and it's peak value
+	int pos = easyLerp(0, audio->total_peak, audio->total_current, start, end);
+	*weighted_pos = (*weighted_pos * (100 - locality) + pos * locality) / 100;
+	if (end > start) {
+		for (int x = start; x < *weighted_pos; x++) {
+			handler->writeLed(x, handler->write_type[handler->animation_index_number], CHSV(color, 255, 255));
+		}
+	}
+	//ToDo needs to work both directions
+
+}
+
+void beatBarLoad(Loader* loader) {
+	if (loader->variables[4] > 100) {
+		loader->variables[4] = 100;
+	}
+	else if (loader->variables[4] < 1) {
+		loader->variables[4] = 1;
+	}
+	loader->append(0);
+}
+
+void beatDetector(int variable_start, LEDHandler* handler) {
+	int band = handler->animation_variables[variable_start];
+	int start = handler->animation_variables[variable_start + 1];
+	int end = handler->animation_variables[variable_start + 2];
+	int color = handler->animation_variables[variable_start + 3];
+	int *state = &handler->animation_variables[variable_start + 4];
+	int *prev_total = &handler->animation_variables[variable_start + 5];
+	class audioData* audio = handler->handler_audio_data;
+
+	//waiting for a decrease
+	switch (*state) {
+	case 0: if (audio->total_current < *prev_total) { //waiting for a decrease
+		*state = 1;
+		}
+		  break;
+	case 1: if (audio->total_current > *prev_total) {// waiting for a rise
+		*state = 0;
+		handler->handler_loader->clearLoader();
+		handler->handler_loader->append(start);
+		handler->handler_loader->append(end);
+		handler->handler_loader->append(color);
+		handler->handler_loader->append(50);
+		//handler->addAnimation(&Zoomer, handler->layer[handler->animation_index_number], handler->handler_loader, handler->write_type[handler->animation_index_number]);
+		handler->addAnimation(&FadeBlock, handler->layer[handler->animation_index_number], handler->handler_loader, handler->write_type[handler->animation_index_number]);
+		Serial.println("bruh");
+		}
+		  break;
+	default:
+		*state = 0;
+	}
+	*prev_total = audio->total_current;
+		
+}
+
+void beatDetectorLoad(Loader* loader) {
+	loader->append(0);
+	loader->append(0);
+}
+
+
+void zoomer(int variable_start, LEDHandler* handler) {
+	int start = handler->animation_variables[variable_start];
+	int end = handler->animation_variables[variable_start+1];
+	int color = handler->animation_variables[variable_start+2];
+	int period = handler->animation_variables[variable_start+3];
+	//calculate pos based off time
+	int pos = (handler->current_time - handler->start_time[handler->animation_index_number]) / period;
+	Serial.println("bree");
+	pos = start + pos;
+	if (pos > end) {
+		handler->markForDeletion(handler->animation_index_number);
+		return;
+	}
+	handler->leds[pos] = CHSV(90, 255, 255);
+	handler->writeLed(pos, handler->write_type[handler->animation_index_number], CHSV(color, 255, 255));
+
+}
+
+void tetris(int variable_start, LEDHandler* handler) {
+	int start = handler->animation_variables[variable_start];
+	int end = handler->animation_variables[variable_start + 1];
+	int *base_color = &handler->animation_variables[variable_start + 2];
+	int color_shift = handler->animation_variables[variable_start + 3];
+	int period = handler->animation_variables[variable_start + 4];
+	int bar_width = handler->animation_variables[variable_start + 5];
+	int *num_set = &handler->animation_variables[variable_start + 6];
+	int direction = 1;
+	int max_bars = abs(start - end) / bar_width;
+	
+
+	//if all blocks are placed then strobe
+	if (*num_set > max_bars) {
+		*base_color += color_shift * (max_bars - 1);
+		*num_set = 0;
+	}
+	int color = *base_color;
+
+	//determin direction
+	if (start > end) {
+		direction = -1;
+	}
+	
+	//fill in all set blocks
+	int count = 0;
+	for (int i = end; i != end - direction*bar_width*(*num_set); i -= direction) {
+		if (count % bar_width == 0) {
+			color = color + color_shift;
+		}
+		count++;
+		handler->writeLed(i, handler->write_type[handler->animation_index_number], CHSV(color, 255, 255));
+	}
+	color += color_shift;
+	//determine location of moving block
+	int pos = start + direction*((handler->current_time - handler->start_time[handler->animation_index_number]) / period);
+	//if moving block has reached destination then increase number of set blocks to 1
+	if (direction == 1) {
+		if (pos >= end - bar_width * (*num_set)) {
+			pos = end - bar_width * (*num_set) - 1;
+			*num_set += 1;
+			handler->start_time[handler->animation_index_number] = handler->current_time;
+		}
+	}
+	else {
+		if (pos <= end + bar_width * (*num_set)) {
+			pos = end + bar_width * (*num_set) + 1;
+			*num_set += 1;
+			handler->start_time[handler->animation_index_number] = handler->current_time;
+		}
+	}
+	//Serial.println(*num_set);
+	for (int x = 0; x < bar_width; x++) {
+		int y = pos - direction * x;
+		if ((y > start && y > end) || (y < start && y < end)) {
+			//*num_set = 0;
+			//handler->start_time[handler->animation_index_number] = handler->current_time;
+			return;
+		}
+		handler->writeLed(y, handler->write_type[handler->animation_index_number], CHSV(color, 255, 255));
+	}
+}
+
+void tetrisLoad(Loader* loader) {
+	loader->variables[2] -= loader->variables[3];
+	loader->append(0);
+}
+
+
+
+void musicColor(int variable_start, LEDHandler* handler) {
+	int start = handler->animation_variables[variable_start];
+	int end = handler->animation_variables[variable_start + 1];
+	int color_start = handler->animation_variables[variable_start + 2];
+	int color_end = handler->animation_variables[variable_start + 3];
+	int* prev = &handler->animation_variables[variable_start + 4];
+	audioData* audio = handler->handler_audio_data;
+
+
+	//find the band with the highest weighted average
+	uint8_t highest_index = 0;
+	int highest_value = 0;
+	for (int x = 0; x < NUM_BANDS; x++) {
+		if (audio->weightedAverages[x] > audio->weightedAverages[highest_index]) {
+			highest_index = x;
+			highest_value = audio->weightedAverages[x];
+		}
+	}
+
+	//add that band to the weighted average of whihc band is highest
+	if (audio->total_current != 0) {
+		fract8 f = highest_index * 255 / (NUM_BANDS - 1);
+		*prev = (*prev * 235 + f * 20) / 255;
+	}
+	//changing use of highest index variable here
+	//lerp the weighted averages to color
+	highest_index = lerp8by8(color_start, color_end, *prev);
+	
+	//write the leds
+	for (int i = start; i < end; i++) {
+		handler->writeLed(i, handler->write_type[handler->animation_index_number], CHSV(highest_index, 255, 255));
+	}
+	
+}
+
+void musicColorLoad(Loader* loader) {
+	loader->append(0);
+}
+
+void musicColorVolume(int variable_start, LEDHandler* handler) {
+	int start = handler->animation_variables[variable_start];
+	int end = handler->animation_variables[variable_start + 1];
+	int color_start = handler->animation_variables[variable_start + 2];
+	int color_end = handler->animation_variables[variable_start + 3];
+	int locality = handler->animation_variables[variable_start + 4];
+	int* prev = &handler->animation_variables[variable_start + 5];
+	int* prev2 = &handler->animation_variables[variable_start + 6];
+	int* prev3 = &handler->animation_variables[variable_start + 7];
+	audioData* audio = handler->handler_audio_data;
+
+	//find fraction current is of total
+	uint8_t f = (audio->total_current+1) * 255 / (audio->total_peak+1);
+	*prev = (*prev * (255-locality) + f * locality) / 255;
+	*prev2 = (*prev2 * (255 - locality) + *prev * locality) / 255;
+	*prev3 = (*prev3 * (255 - locality) + *prev2 * locality) / 255;
+
+	//Serial.println(audio->total_current);
+	//Serial.println(*prev);
+
+	//lerp the weighted averages to color
+	 f = lerp8by8(color_start, color_end, *prev3);
+
+	//write the leds
+	for (int i = start; i < end; i++) {
+		handler->writeLed(i, handler->write_type[handler->animation_index_number], CHSV(f, 255, 255));
+	}
+
+}
+
+void musicColorVolumeLoad(Loader* loader) {
+	loader->append(0);
+	loader->append(0);
+}
+
+void duelingBars(int variable_start, LEDHandler* handler) {
+	int upper_start = handler->animation_variables[variable_start];
+	int upper_size = handler->animation_variables[variable_start + 1];
+	int upper_color = handler->animation_variables[variable_start + 2];
+	int lower_start = handler->animation_variables[variable_start + 3];
+	int lower_size = handler->animation_variables[variable_start + 4];
+	int lower_color = handler->animation_variables[variable_start + 5];
+	int period = handler->animation_variables[variable_start + 6];
+	int send_size = handler->animation_variables[variable_start + 7];
+	int animation_index = handler->animation_index_number;
+	
+	Loader* loader = handler->handler_loader;
+
+	//Every n milliseconds randomly choose  a side to send blocks to the otherside
+		//Choice is weighted by how big each side is
+		//If side would be empty dont send
+	if (handler->current_time - handler->start_time[animation_index] >= period) {
+		handler->start_time[animation_index] = handler->current_time;
+		if (random16(upper_size + lower_size) < lower_size) {
+			//lower side sends
+			if (lower_size > send_size) {
+
+				send_size = random8(1, send_size);
+				loader->clearLoader();
+				loader->append(animation_index);
+				loader->append(lower_start + lower_size);
+				loader->append(1);
+				loader->append(4);
+				loader->append(send_size);
+				handler->addAnimation(&DuelingBarSender, handler->layer[animation_index] - 1, loader, handler->write_type[animation_index] );
+				lower_size -= send_size;
+				
+
+			}
+		}
+		else {
+			//upper side sends
+			if (upper_size > send_size) {
+				send_size = random8(1, send_size);
+				loader->clearLoader();
+				loader->append(animation_index);
+				loader->append(upper_start - upper_size);
+				loader->append(-1);
+				loader->append(4);
+				loader->append(send_size);
+				handler->addAnimation(&DuelingBarSender, handler->layer[animation_index] - 1, loader, handler->write_type[animation_index]);
+				upper_size -= send_size;
+			}
+		}
+		handler->start_time[animation_index] = handler->current_time;
+	}
+
+	handler->animation_variables[variable_start + 1] = upper_size;
+	handler->animation_variables[variable_start + 4] = lower_size;
+
+	//write the leds for each side
+	for (int x = 0; x < upper_size; x++) {
+		handler->writeLed(upper_start - x, handler->write_type[animation_index], CHSV(upper_color, 255, 255));
+	}
+	for (int x = 0; x < lower_size; x++) {
+		handler->writeLed(lower_start + x, handler->write_type[animation_index], CHSV(lower_color, 255, 255));
+	}
+
+}
+
+void duelingBarSender(int variable_start, LEDHandler* handler) {
+	//ToDo this should be dependant 
+	int destination_index = handler->animation_variables[variable_start];
+	int start = handler->animation_variables[variable_start + 1];
+	int direction = handler->animation_variables[variable_start + 2];
+	int period = handler->animation_variables[variable_start + 3];
+	int size = handler->animation_variables[variable_start + 4];
+	
+	//Find where the deuling bars stores its variables
+	destination_index = handler->variable_start_locations[destination_index];
+	//find new postion
+	int pos = start + direction * ((handler->current_time - handler->start_time[handler->animation_index_number]) / period);
+
+	if (direction == -1) {//destination boundaries are on the low side
+		destination_index += 3;
+	}
+	int boundary1 = handler->animation_variables[destination_index];
+	int boundary2 = handler->animation_variables[destination_index+1];
+	boundary2 = boundary1 - direction * boundary2;
+
+	//if new position lies within the destination, increase the size of the destination and delete this
+	//Serial.print("pos: ");
+	//Serial.print(pos);
+	//Serial.print(" boundary 1: ");
+	//Serial.print(boundary1);
+	//Serial.print(" boundary2: ");
+	//Serial.println(boundary2);
+	if ((pos <= boundary1 && pos >= boundary2) || (pos >= boundary1 && pos <= boundary2)) {
+		handler->animation_variables[destination_index+1] += size;
+		handler->markForDeletion(handler->animation_index_number);
+		//Serial.println("Deleted");
+		return;
+	}
+	//otherwise write the leds
+	int color = 0;
+	if (direction == -1) {
+		color = handler->animation_variables[destination_index - 1];
+	}
+	else {
+		color = handler->animation_variables[destination_index + 5];
+	}
+	
+	for (int x = 0; x < size; x++) {
+		handler->writeLed(pos - direction*x, handler->write_type[handler->animation_index_number], CHSV(color, 255, 255));
+	}
 }
