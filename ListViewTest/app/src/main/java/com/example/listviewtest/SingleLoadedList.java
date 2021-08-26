@@ -1,8 +1,9 @@
 package com.example.listviewtest;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class SingleLoadedList {
+public class SingleLoadedList implements Serializable {
 
     public static ArrayList<animationInfo> animations = new ArrayList<>();
     public static ArrayList<String> animationNames = new ArrayList<>();

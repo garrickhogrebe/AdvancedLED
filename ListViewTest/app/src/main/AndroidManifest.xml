@@ -15,6 +15,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.ListViewTest">
         <activity
+            android:name=".PresetActivity"
+            android:exported="true" />
+        <activity
             android:name=".addAnimationActivity"
             android:exported="true" />
         <activity

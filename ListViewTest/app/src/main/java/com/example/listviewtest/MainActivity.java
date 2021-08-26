@@ -16,7 +16,7 @@ public class MainActivity extends AppCompatActivity {
     ListView listView;
 
     //Data for list
-    String[] menus = {"Bluetooth Setup", "Select animations"};
+    String[] menus = {"Bluetooth Setup", "Select animations", "Manage Presets"};
     //Intent blueIntent = new Intent(this, blueActivity.class);
     //Intent animationsIntent = new Intent(this, animationActivity.class);
     //Intent blueIntent = new Intent(this, blueActivity.class);
@@ -30,6 +30,9 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case 1:
                 intent = new Intent(this, animationActivity.class);
+                break;
+            case 2:
+                intent = new Intent(this, PresetActivity.class);
                 break;
             default:
                 intent = new Intent(this, blueActivity.class);
