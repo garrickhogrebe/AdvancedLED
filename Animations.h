@@ -82,5 +82,7 @@ void musicColorVolume(int variable_start, LEDHandler* handler);
 void musicColorVolumeLoad(Loader* loader);
 void duelingBars(int variable_start, LEDHandler* handler);
 void duelingBarSender(int variable_start, LEDHandler* handler);
-
+void beatBar2(int variable_start, LEDHandler* handler);
+void beatBar2Load(Loader* loader);
+void beatBar2trail(int variable_start, LEDHandler* handler);
 #endif 

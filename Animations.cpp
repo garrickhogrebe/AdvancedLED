@@ -72,6 +72,8 @@ animation MusicColor(4, "Music Color", false, musicColor, musicColorLoad);
 animation MusicColorVolume(5, "Music Color Volume", false, musicColorVolume, musicColorVolumeLoad);
 animation DuelingBars(8, "Deuling Bars", true, duelingBars);
 animation DuelingBarSender(5, "Deuling Bar Sender", true, duelingBarSender);
+animation BeatBar2(5, "BeatBar2", false, beatBar2, beatBar2Load);
+animation BeatBar2trail(4, "BeatBar2Trail", true, beatBar2trail);
 
 
 void sinelon(int variable_start, LEDHandler* handler) {
@@ -602,3 +604,217 @@ void duelingBarSender(int variable_start, LEDHandler* handler) {
 		handler->writeLed(pos - direction*x, handler->write_type[handler->animation_index_number], CHSV(color, 255, 255));
 	}
 }
+
+void beatBar2(int variable_start, LEDHandler* handler) {
+	int band = handler->animation_variables[variable_start];
+	int start = handler->animation_variables[variable_start+1];
+	int end = handler->animation_variables[variable_start+2];
+	int locality = handler->animation_variables[variable_start+3];
+	int color = handler->animation_variables[variable_start+4];
+	int *target = &handler->animation_variables[variable_start+5];
+	int *current = &handler->animation_variables[variable_start+6];
+	int *prev = &handler->animation_variables[variable_start+7];
+	audioData* audio = handler->handler_audio_data;
+	int direction = 1;
+	int maxSize;
+	int bandVal;
+	int bandValPeak;
+
+	if (band >= 0 && band < 16) {
+		bandVal = audio->bandValues[band];
+		bandValPeak = audio->weightedPeaks[band];
+	}
+	else {
+		bandVal = audio->total_current;
+		bandValPeak = audio->total_peak;
+	}
+
+	if (start > end) {
+		direction = -1;
+		maxSize = start - end + 1;
+	}
+	else {
+		maxSize = end - start + 1;
+	}
+	//weighted average of target
+	*target = (*target * (100 - locality) + bandVal * locality) / 100;
+	
+	//weighted average of of current to target
+	*current = (*current * (100 - locality) + *target * locality) / 100;
+
+	//lerp between total
+	int pos = easyLerp(0, bandValPeak, *current, 0, maxSize);
+
+	if (*current > bandValPeak) {
+		pos = maxSize;
+	}
+
+	/*
+	if (pos > *peak) {
+		*peak = pos;
+	}
+
+	int dif = *peak - pos;
+	int count = 0;
+	int bright;
+	*/
+
+	if (direction == 1) {
+		for (int x = 0; x < pos; x++) {
+			handler->writeLed(start + x, handler->write_type[handler->animation_index_number], CHSV(color, 255, 255));
+		}
+		/*
+		for (int x = start + pos; x < start + *peak; x++) {
+			bright = 255 - easyLerp(0, dif, count, 0, 255);
+			count++;
+			handler->writeLed(x, handler->write_type[handler->animation_index_number], CHSV(color, 255, bright));
+		}
+		*/
+	}
+	else {
+		for (int x = 0; x < pos; x++) {
+			handler->writeLed(start - x, handler->write_type[handler->animation_index_number], CHSV(color, 255, 255));
+		}
+		/*
+		for (int x = start - pos; x > start - *peak; x--) {
+			bright = 255 - easyLerp(0, dif, count, 0, 255);
+			count++;
+			handler->writeLed(x, handler->write_type[handler->animation_index_number], CHSV(color, 255, bright));
+		}
+		*/
+	}
+	Loader* loader = handler->handler_loader;
+	loader->clearLoader();
+	if (direction == 1) {
+		if (*prev > pos) {
+			loader->append(handler->animation_index_number);
+			loader->append(start + *prev);
+			loader->append(start + pos);
+			loader->append(1);
+			//add the animation
+			handler->addAnimation(&BeatBar2trail, handler->layer[handler->animation_index_number] + 1, loader, handler->write_type[handler->animation_index_number]);
+
+		}
+	
+	}
+	else {
+		if (*prev > pos) {
+			loader->append(handler->animation_index_number);
+			loader->append(start - *prev);
+			loader->append(start - pos);
+			loader->append(1);
+			handler->addAnimation(&BeatBar2trail, handler->layer[handler->animation_index_number] + 1, loader, handler->write_type[handler->animation_index_number]);
+		}
+	}
+
+	//*peak = *peak - maxSize/10; 
+	*prev = pos;
+}
+
+void beatBar2Load(Loader* loader) {
+	//locality between 0 and 100
+	if (loader->variables[3] > 100) {
+		loader->variables[3] = 100;
+	}
+	if (loader->variables[3] < 0) {
+		loader->variables[3] = 0;
+	}
+	loader->append(0);
+	loader->append(0);
+	loader->append(0);
+}
+
+
+void beatBar2trail(int variable_start, LEDHandler* handler) {
+	int parentLocation = handler->animation_variables[variable_start];
+	parentLocation = handler->variable_start_locations[parentLocation];
+	int *farEnd = &handler->animation_variables[variable_start+1];
+	int *closeEnd = &handler->animation_variables[variable_start+2];
+	int* cycles = &handler->animation_variables[variable_start + 3];
+	int parentStart = handler->animation_variables[parentLocation + 1];
+	int parentEnd = handler->animation_variables[parentLocation + 2];
+	int hue = handler->animation_variables[parentLocation + 4];
+	int parentPos = handler->animation_variables[parentLocation + 7];
+	int direction = 1;
+	int maxSize;
+	int fadeRate;
+	CRGB color;
+
+	//determine direction
+	if (*farEnd < *closeEnd) {
+		direction = -1;
+		parentPos = parentStart - parentPos;
+		maxSize = parentStart - parentEnd;
+	}
+	else {
+		parentPos = parentStart + parentPos;
+	}
+	
+	//if the bar has passed the far end, delete this and return
+
+	//BUGGY maybe
+	if (abs(parentPos - parentStart) > abs(*farEnd - parentStart)) {
+		//Serial.println("deletion 1");
+		handler->markForDeletion(handler->animation_index_number);
+		return;
+	}
+
+	//BUGGY MAYBE
+	if (abs(parentPos - parentStart) > abs(*closeEnd - parentStart)) {
+		*closeEnd = parentPos;
+	}
+
+	//each led has a fade rate which is based on a lerp of parents distance
+	if (direction == 1) {
+		for (int x = *closeEnd; x <= *farEnd; x++) {
+			//determine fade rate
+			fadeRate = easyLerp(parentStart, parentEnd, x, 10, 100);
+			color = CHSV(hue, 255, 255);
+			for (int y = 0; y < *cycles; y++) {
+				color.fadeToBlackBy(fadeRate);
+			}
+			if (color.getAverageLight() == 0) {
+				*farEnd = x;
+				break;
+			}
+			handler->writeLed(x, handler->write_type[handler->animation_index_number], color);
+
+		}
+		
+	}
+	else {
+		for (int x = *closeEnd; x >= *farEnd; x--) {
+			fadeRate = easyLerp(0, maxSize, parentStart - x, 10, 100);
+			color = CHSV(hue, 255, 255);
+			for (int y = 0; y < *cycles; y++) {
+				color.fadeToBlackBy(fadeRate);
+			}
+			if (color.getAverageLight() == 0) {
+				*farEnd = x;
+				break;
+			}
+			handler->writeLed(x, handler->write_type[handler->animation_index_number], color);
+		}
+
+	}
+
+	//if the far end == close end, delete this
+	/*
+	Serial.print("far: ");
+	Serial.print(*farEnd);
+	Serial.print(" close: ");
+	Serial.println(*closeEnd);
+	*/
+
+	if (*farEnd == *closeEnd) {
+		//Serial.println("deletion 2");
+		handler->markForDeletion(handler->animation_index_number);
+	}
+
+	*cycles += 1;
+}
+
+
+//betterMusic Fire
+
+//that thing i had in advancedled 3

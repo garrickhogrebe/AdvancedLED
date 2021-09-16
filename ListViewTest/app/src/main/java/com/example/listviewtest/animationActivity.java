@@ -156,7 +156,7 @@ public class animationActivity extends AppCompatActivity {
         } catch (IOException e) {
             //if the sending fails this is most likely because device is no longer there
             Toast.makeText(getBaseContext(), "ERROR - Device not found", Toast.LENGTH_SHORT).show();
-            finish();
+            //finish();
         }
     }
 

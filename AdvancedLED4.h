@@ -13,6 +13,7 @@
 #define DEBUG
 
 #define DATA_PIN    15
+//#define DATA_PIN    26
 #define LED_TYPE    WS2812B
 #define COLOR_ORDER GRB
 #define BRIGHTNESS          140
@@ -20,6 +21,7 @@
 #define SAMPLES 1024
 #define SAMPLING_FREQ   40000
 #define AUDIO_IN_PIN    36
+//#define AUDIO_IN_PIN    34
 #define NOISE          9000
 
 extern TaskHandle_t FFTstuff;

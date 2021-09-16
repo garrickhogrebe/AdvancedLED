@@ -28,6 +28,7 @@ public class SingleAvailableList {
         append(new animationInfo(14, "Music Color Volume", "Start/End/Color Start/Color End/Locality"));
         append(new animationInfo(15,"Dueling Bars", "Upper Start/Upper Size/Upper Color/Lower Start/Lower Size/ Lower Color/Period/Send Size"));
         append(new animationInfo(16, "Dueling Bar Sender", "Destination Index/Start/Direction/Period/Size"));
+        append(new animationInfo(17, "BeatBar2","Band/Start/End/Locality/Color"));
         //append(new animationInfo(1,"Gravity Ball", "Start/End/Gravity/Color"));
         //append(new animationInfo(2,"Beat Bar", "Start/End/Bands/Color"));
         //append(new animationInfo(3,"Sinelon", "Start/End/Color/BPM"));
